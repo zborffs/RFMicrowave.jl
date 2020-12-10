@@ -11,22 +11,22 @@ end
 
 export series_q_factor_LR
 function series_q_factor_LR(L, R, ω0)
-	ω0 * L / R
+	uconvert(u"NoUnits", ω0 * L / R)
 end
 
 export series_q_factor_CR
 function series_q_factor_CR(C, R, ω0)
-	1 / (ω0 * R * C)
+	uconvert(u"NoUnits", 1 / (ω0 * R * C))
 end
 
 export parallel_q_factor_LR
 function parallel_q_factor_LR(L, R, ω0)
-	R / (ω0 * L)
+	uconvert(u"NoUnits", R / (ω0 * L))
 end
 
 export parallel_q_factor_CR
 function parallel_q_factor_CR(C, R, ω0)
-	ω0 * R * C
+	uconvert(u"NoUnits", ω0 * R * C)
 end
 
 # S.C. \lambda/2 and \lambda/4 line + O.C. \lambda/2

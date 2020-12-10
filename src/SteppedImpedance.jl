@@ -1,7 +1,8 @@
-using RFMicrowave, Unitful
+using RFMicrowave, Unitful, UnitfulAstro
 
-function steppedLPF(L, C, ω0, Zl, Zh, Z0)
+export steppedLPF
+function steppedLPF(L, C, Zl, Zh, Z0)
 	elecLengthL = L * Z0 / Zh
 	elecLengthC = C * Zl / Z0
-	return (elecLengthL, elecLengthC)
+	return (rad2deg.(elecLengthL), rad2deg.(elecLengthC))
 end

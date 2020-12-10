@@ -5,7 +5,16 @@ using Unitful
 include("FilterTransforms.jl")
 include("Microstrip.jl")
 include("Resonators.jl")
+include("SteppedImpedance.jl")
+include("TLs.jl")
+include("Amps.jl")
 
+export printComplex
+function printComplex(z)
+	println("$(abs(z)) ∠$(rad2deg(angle(z)))")
+end
+
+# Quarter Wave Coupled resonators
 export bandstop_coupled_resonator_impedance
 function bandstop_coupled_resonator_impedance(Δ, gn ;Z0=50.0u"Ω")
 	4 * Z0 / (π * gn * Δ)
@@ -16,6 +25,7 @@ function bandpass_coupled_resonsator_impedance(Δ, gn; Z0=50u"Ω")
 	π * Z0 * Δ / (4 * gn)
 end
 
+# Capacitively Coupled Series resonators
 export bandpass_coupled_line_J1
 function bandpass_coupled_line_J1(Δ, g1; Z0=50u"Ω")
 	1 / Z0 * sqrt(π * Δ / (2 * g1))
@@ -63,6 +73,84 @@ function cap_susceptance_to_elec_length(B; Z0=50u"Ω")
 	return θ
 end
 
+# Capacitively Coupled Shunt Resonators
+export bpf_cap_coupled_shuntJ1
+function bpf_cap_coupled_shuntJ1(Δ, g1; Z0=50u"Ω")
+	1 / Z0 * sqrt(π * Δ / (4 * g1))
+end
+
+export bpf_cap_coupled_shuntJn
+function bpf_cap_coupled_shuntJn(Δ, gn, gn_1; Z0=50u"Ω")
+	1 / Z0 * ((π * Δ) / (4 * sqrt(gn * gn_1)))
+end
+
+export bpf_cap_coupled_shuntJn_1
+function bpf_cap_coupled_shuntJn_1(Δ, gn, gn_1; Z0=50u"Ω")
+	1 / Z0 * sqrt(π * Δ / (4 * gn * gn_1))
+end
+
+export bpf_cap_coupled_shunt_C1
+function bpf_cap_coupled_shunt_C1(J01, ω0; Z0=50u"Ω")
+	J01 / (ω0 * sqrt(1 - (Z0 * J01)^2))
+end
+
+export bpf_cap_coupled_shuntCn
+function bpf_cap_coupled_shuntCn(Jn, ω0)
+	Jn / ω0
+end
+
+export bpf_cap_coupled_shuntCn_1
+function bpf_cap_coupled_shuntCn_1(Jn_1, ω0; Z0=50u"Ω")
+	Jn_1 / (ω0 * sqrt(1 - (Z0 * Jn_1)^2))
+end
+
+export bpf_cap_coupled_ln
+function bpf_cap_coupled_ln(ω0, ΔC; Z0=50u"Ω")
+	1 / 4 + (Z0 * ω0 * ΔC / (2 * π))
+end
+
+export bpf_cap_coupled_shunt_J
+function bpf_cap_coupled_shunt_J(Δ, g; Z0=50u"Ω")
+	size = length(g)
+	temp = bpf_cap_coupled_shuntJ1(Δ, g[1]; Z0=Z0)
+	J = Vector{typeof(temp)}(undef, size)
+	J[1] = temp
+	for i in 2:length(J) - 1
+		J[i] = bpf_cap_coupled_shuntJn(Δ, g[i - 1], g[i])
+	end
+	J[size] = bpf_cap_coupled_shuntJn_1(Δ, g[size - 1], g[size])
+	return J
+end
+
+export bpf_cap_coupled_shunt_C
+function bpf_cap_coupled_shunt_C(J, ω0; Z0=50u"Ω")
+	size = length(J)
+	temp = bpf_cap_coupled_shunt_C1(J[1], ω0; Z0=Z0)
+	C = Vector{typeof(temp)}(undef, size)
+	C[1] = temp
+	for i in 2:length(J) - 1
+		C[i] = bpf_cap_coupled_shuntCn(J[i], ω0)
+	end
+	C[size] = bpf_cap_coupled_shuntCn_1(J[end], ω0; Z0=Z0)
+	return C
+end
+
+export bpf_cap_coupled_shunt_ΔC
+function bpf_cap_coupled_shunt_ΔC(C)
+	size = length(C) - 1
+	ΔC = Vector{typeof(C[1])}(undef, size)
+	for i in 1:size
+		ΔC[i] = -C[i] - C[i + 1]
+	end
+	return ΔC
+end
+
+export bpf_cap_coupled_shunt_Δl
+function bpf_cap_coupled_shunt_Δl(ω0, C; Z0=50u"Ω")
+	Z0 * ω0 * C / (2 * π)
+end
+
+# Generic
 export find_center_freq
 function find_center_freq(ω1, ω2)
 	ω0 = sqrt(ω1 * ω2)
@@ -70,7 +158,7 @@ end
 
 export lpf_bpf_transform
 function lpf_bpf_transform(ω, ω0, ω1, ω2)
-	Δ = ω0 / (ω2 - ω1)
+	Δ = (ω2 - ω1) / ω0
 	lpf_bpf_transform(ω, ω0, Δ)
 end
 

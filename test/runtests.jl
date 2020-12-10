@@ -120,3 +120,15 @@ end
 	@test isapprox(LC_series[1][2], 127.0u"nH"; atol=0.1u"nH")
 	@test isapprox(LC_series[2][2], 0.199u"pF"; atol=0.001u"pF")
 end
+
+# Example 8.10
+@testset "Capacitively Coupled Shunt Resonators Bandpass Filter Design" begin
+	N = 3
+	g = EqualRipple05dB[N]
+	f0 = 2.5u"GHz"
+	Δ = 0.1
+	Z0 = 50u"Ω"
+
+	# Find everything about the line
+	J = bpf_cap_coupled_shunt_J.(Δ, g; Z0)
+end
